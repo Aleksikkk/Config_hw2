@@ -10,7 +10,7 @@ def read_object(sha):
     with open(path, 'rb') as f:
         data = f.read()
     data = zlib.decompress(data)
-    size, type, content = parse_git_object(data)
+    _, type, content = parse_git_object(data)
     return type, content
 
 def parse_git_object(data):
