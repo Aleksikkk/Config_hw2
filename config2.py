@@ -64,13 +64,15 @@ def comp(commits):
     return '\n'.join(output)
 
 if __name__ == "__main__":
-    # Чтение пути из config2.ini
     config = configparser.ConfigParser()
     config.read('config2.ini')
     
     if 'settings' in config and 'repo_path' in config['settings'] and 'visualization_path' in config['settings']:
         repo_path = config['settings']['repo_path']
         visualization_path = config['settings']['visualization_path']
+    if 'settings' in config and 'repo_path' in config['settings'] and 'tag' in config['settings']:
+        repo_path = config['settings']['repo_path']
+        visualization_path = config['settings']['tag']
 
         commit_history = get_commit_history(repo_path)
         print(commit_history)
