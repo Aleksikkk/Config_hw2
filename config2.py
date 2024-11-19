@@ -10,7 +10,7 @@ def read_object(sha):
     with open(path, 'rb') as f:
         data = f.read()
     data = zlib.decompress(data)
-    _, type, content = parse_git_object(data)
+    size, type, content = parse_git_object(data)
     return type, content
 
 def parse_git_object(data):
@@ -72,7 +72,7 @@ if __name__ == "__main__":
         visualization_path = config['settings']['visualization_path']
     if 'settings' in config and 'repo_path' in config['settings'] and 'tag' in config['settings']:
         repo_path = config['settings']['repo_path']
-        visualization_path = config['settings']['tag']
+        tag = config['settings']['tag']
 
         commit_history = get_commit_history(repo_path)
         print(commit_history)
