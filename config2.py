@@ -70,10 +70,11 @@ if __name__ == "__main__":
     if 'settings' in config and 'repo_path' in config['settings'] and 'visualization_path' in config['settings']:
         repo_path = config['settings']['repo_path']
         visualization_path = config['settings']['visualization_path']
+        print(f"Путь к программе для визуализации: {visualization_path}")
+
     if 'settings' in config and 'repo_path' in config['settings'] and 'tag' in config['settings']:
         repo_path = config['settings']['repo_path']
         tag = config['settings']['tag']
-
         print(f"Имя тега: {tag}")
 
         commit_history = get_commit_history(repo_path)
