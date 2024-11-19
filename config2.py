@@ -71,8 +71,6 @@ if __name__ == "__main__":
     if 'settings' in config and 'repo_path' in config['settings'] and 'visualization_path' in config['settings']:
         repo_path = config['settings']['repo_path']
         visualization_path = config['settings']['visualization_path']
-        
-        print(f"Путь к программе визуализации: {visualization_path}")
 
         commit_history = get_commit_history(repo_path)
         print(commit_history)
