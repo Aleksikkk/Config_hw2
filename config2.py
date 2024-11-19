@@ -74,6 +74,8 @@ if __name__ == "__main__":
         repo_path = config['settings']['repo_path']
         tag = config['settings']['tag']
 
+        print(f"Имя тега: {tag}")
+
         commit_history = get_commit_history(repo_path)
         print(commit_history)
         
