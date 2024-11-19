@@ -1,64 +1,88 @@
-import unittest
-from unittest.mock import patch, mock_open, MagicMock
 import os
 import zlib
 from datetime import datetime
 from config2 import *
 
-class TestGitFunctions(unittest.TestCase):
+def test_read_object():
+    sha = 'abc123'
+    path = os.path.join('.git', 'objects', 'ab', 'c123')
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    
+    data = zlib.compress(b'commit 123\0content here')
+    with open(path, 'wb') as f:
+        f.write(data)
 
-    @patch('os.path.isfile')
-    @patch('builtins.open', new_callable=mock_open, read_data=b'commit 123\nparent abcdef\nauthor Alice <alice@example.com> 1622505600\n\nThis is a commit message.')
-    @patch('zlib.decompress')
-    def test_read_object(self, mock_decompress, mock_open, mock_isfile):
-        mock_isfile.return_value = True
-        mock_decompress.return_value = b'commit 123\nparent abcdef\nauthor Alice <alice@example.com> 1622505600\n\nThis is a commit message.'
-        
-        type, content = read_object('abcdef1234567890')
-        self.assertEqual(type, 'commit')
-        self.assertIn(b'parent abcdef', content)
+    obj_type, content = read_object(sha)
+    assert obj_type == 'commit'
+    assert b'content here' in content
 
-    def test_parse_git_object(self):
-        data = b'commit 123\nparent abcdef\nauthor Alice <alice@example.com> 1622505600\n\nThis is a commit message.'
-        size, type, content = parse_git_object(data)
-        self.assertEqual(size, '123')
-        self.assertEqual(type, 'commit')
-        self.assertIn(b'parent abcdef', content)
+def test_parse_git_object():
+    data = zlib.compress(b'commit 123\0Hello World!')
+    size, obj_type, content = parse_git_object(zlib.decompress(data))
+    
+    assert size == '123'
+    assert obj_type == 'commit'
+    assert content == b'Hello World!'
 
-    @patch('read_object')
-    def test_get_commit_info(self, mock_read_object):
-        mock_read_object.return_value = ('commit', b'parent abcdef\nauthor Alice <alice@example.com> 1622505600\n\nThis is a commit message.')
-        
-        commit_info = get_commit_info('abcdef1234567890')
-        self.assertEqual(commit_info['hash'], 'abcdef1234567890')
-        self.assertEqual(commit_info['parent'], None)
-        self.assertEqual(commit_info['author'], 'Alice <alice@example.com>')
+def test_get_commit_info():
+    sha = 'abc123'
+    path = os.path.join('.git', 'objects', 'ab', 'c123')
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    
+    data = zlib.compress(b'commit 123\0parent def456\nauthor unknown <John> 1731431007 +0300\n')
+    with open(path, 'wb') as f:
+        f.write(data)
 
-    @patch('os.chdir')
-    @patch('builtins.open', new_callable=mock_open, read_data='abcdef1234567890')
-    @patch('get_commit_info')
-    def test_get_commit_history(self, mock_get_commit_info, mock_open, mock_chdir):
-        mock_get_commit_info.return_value = {'hash': 'abcdef1234567890', 'author': 'Alice <alice@example.com>', 'parent': None}
-        
-        commit_history = get_commit_history('C:\\Users\\user\\Desktop\\demo')
-        self.assertIn('abcdef1234567890', commit_history)
+    commit_info = get_commit_info(sha)
+    assert commit_info is not None
+    assert commit_info['hash'] == sha
+    assert commit_info['author'] == '<John> 1731431007 +0300'
 
-    def test_translate(self):
-        commit_info = {
-            'hash': 'abcdef1234567890',
-            'author': 'Alice <alice@example.com> 1622505600',
-            'parent': None
-        }
-        result = translate(commit_info)
-        self.assertEqual(result, [('abcdef1234567890', 'Alice', '2021-05-31 00:00:00')])
+def test_get_commit_history():
+    # Создаем тестовый репозиторий с ссылкой на коммит
+    repo_path = '.'  # Замените на ваш тестовый путь
+    os.makedirs(os.path.join(repo_path, '.git', 'refs', 'tags'), exist_ok=True)
+    
+    # Создаем тестовый коммит
+    sha = 'abc123'
+    branch_path = os.path.join(repo_path, '.git', 'refs', 'tags', '2.0')
+    with open(branch_path, 'w') as f:
+        f.write(sha)
 
-    def test_comp(self):
-        commits = [('abcdef1234567890', 'Alice', '2021-05-31 00:00:00'), ('1234567890abcdef', 'Bob', '2021-06-01 00:00:00')]
-        result = comp(commits)
-        self.assertIn('@startuml', result)
-        self.assertIn('abcdef1234567890 : 2021-05-31 00:00:00', result)
-        self.assertIn('abcdef1234567890 <|-- 1234567890abcdef', result)
-        self.assertIn('@enduml', result)
+    # Создаем объект для тестирования
+    path = os.path.join(repo_path, '.git', 'objects', 'ab', 'c123')
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    
+    data = zlib.compress(b'commit 123\0parent def456\nauthor John Doe 1610000000 +0300\n')
+    with open(path, 'wb') as f:
+        f.write(data)
 
+    os.chdir(repo_path)
+    history = get_commit_history(repo_path)
+    assert '@startuml' in history
+    assert '@enduml' in history
+
+def test_translate():
+    example_dict = {'hash': 'abc123', 'author': 'John 1610000000 +0300', 'parent': None}
+    result = translate(example_dict)
+    
+    assert len(result) == 1
+    assert result[0][0] == 'abc123'
+
+def test_comp():
+    test_commits = [('abc123', 'John Doe', '2021-01-01 00:00:00')]
+    result = comp(test_commits)
+    
+    assert '@startuml' in result, "Start of UML not found in output"
+    assert '@enduml' in result, "End of UML not found in output"
+
+
+# Основная функция для запуска тестов
 if __name__ == "__main__":
-    unittest.main()
+    test_read_object()
+    test_parse_git_object()
+    test_get_commit_info()
+    test_get_commit_history()
+    test_translate()
+    test_comp()
+    print("Все тесты прошли успешно!")

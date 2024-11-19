@@ -36,9 +36,9 @@ def get_commit_info(commit_sha):
             commit_info['author'] = line.split(' ', 2)[2]
     return commit_info
 
-def get_commit_history(repo_path):
+def get_commit_history(repo_path, tag):
     os.chdir(repo_path)
-    branch_path = os.path.join('.git', 'refs', 'tags', '2.0')  
+    branch_path = os.path.join('.git', 'refs', 'tags', tag)  
     with open(branch_path, 'r', encoding='utf-8') as f:
         commit_sha = f.read().strip()
         commit_info = get_commit_info(commit_sha)
@@ -77,7 +77,7 @@ if __name__ == "__main__":
         tag = config['settings']['tag']
         print(f"Имя тега: {tag}")
 
-        commit_history = get_commit_history(repo_path)
+        commit_history = get_commit_history(repo_path, tag)
         print(commit_history)
         
 
