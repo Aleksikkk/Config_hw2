@@ -38,7 +38,7 @@ def get_commit_info(commit_sha):
 
 def get_commit_history(repo_path):
     os.chdir(repo_path)
-    branch_path = os.path.join('.git', 'refs', 'tags', '2.0')  # Укажите нужную ветку
+    branch_path = os.path.join('.git', 'refs', 'tags', '2.0')  
     with open(branch_path, 'r', encoding='utf-8') as f:
         commit_sha = f.read().strip()
         commit_info = get_commit_info(commit_sha)
